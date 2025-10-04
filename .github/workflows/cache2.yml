@@ -1,0 +1,41 @@
+name: Dependency Caching Example
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Use a recent Node.js version
+
+      - name: Cache Node Modules
+        id: cache-node-modules
+        uses: actions/cache@v4
+        with:
+          # The key must be exactly 'cache-5d87c40' as requested
+          key: cache-5d87c40
+          path: node_modules
+          # Use a restore key in case the main key misses, for faster dependency restoration
+          restore-keys: |
+            cache-5d87c40-
+
+      - name: Install dependencies
+        # This step will only run if the cache was a miss
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        run: |
+          npm install
+
+      - name: prime-cache-5d87c40
+        # Echo the cache hit/miss result using the output of the cache step
+        run: |
+          echo "Cache result: ${{ steps.cache-node-modules.outputs.cache-hit }}"
